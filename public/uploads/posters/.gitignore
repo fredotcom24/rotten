@@ -1,0 +1,4 @@
+# Ignore all uploaded files
+*
+# And keep this file
+!.gitignore

@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  email             String   @unique
+  password          String
+  name              String?
+  role              Role     @default(USER)
+  emailVerified     Boolean  @default(false)
+  verificationToken String?
+  tokenExpiry       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  comments  Comment[]
+  ratings   Rating[]
+  favorites Favorite[]
+  emailChangeRequests EmailChangeRequest[]
+  passwordChangeRequests PasswordChangeRequest[]
+
+  @@map("users")
+}
+
+model EmailChangeRequest {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newEmail        String
+  verificationToken String @unique
+  tokenExpiry     DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("email_change_requests")
+}
+
+model PasswordChangeRequest {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verificationToken String @unique
+  tokenExpiry     DateTime
+  createdAt       DateTime @default(now())
+
+  @@map("password_change_requests")
+}
+
+model Film {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  tmdbId           Int?      @unique
+  title            String
+  overview         String?
+  releaseDate      DateTime?
+  posterPath       String?
+  backdropPath     String? 
+  runtime          Int? 
+  genres           String[]
+  director         String?
+  originalLanguage String?
+  
+  averageRating Float? @default(0)
+  totalRatings  Int    @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  comments  Comment[] 
+  ratings   Rating[]
+  favorites Favorite[]
+
+  @@map("films")
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  filmId String @db.ObjectId
+  film   Film   @relation(fields: [filmId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
+}
+
+model Rating {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  value     Int      
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  filmId String @db.ObjectId
+  film   Film   @relation(fields: [filmId], references: [id], onDelete: Cascade)
+
+  // Contraint: a user can rate a film once
+  @@unique([userId, filmId])
+  @@map("ratings")
+}
+
+model Favorite {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt DateTime @default(now())
+
+  // Relations
+  userId String @db.ObjectId
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  filmId String @db.ObjectId
+  film   Film   @relation(fields: [filmId], references: [id], onDelete: Cascade)
+
+  // Contrainte: a user can add fav once
+  @@unique([userId, filmId])
+  @@map("favorites")
+}
