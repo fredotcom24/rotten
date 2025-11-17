@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 
-export default function FilmsPage({ movie }) {
+function FilmsContent({ movie }) {
   const [films, setFilms] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalFilms, setTotalFilms] = useState(0)
@@ -150,5 +150,22 @@ export default function FilmsPage({ movie }) {
       )}
     </div>
     </>
+  )
+}
+
+export default function FilmsPage({ movie }) {
+  return (
+    <Suspense
+      fallback={
+        <>
+          <Navbar />
+          <div className="min-h-screen bg-[#020d18] flex items-center justify-center">
+            <div className="text-white text-xl">Loading...</div>
+          </div>
+        </>
+      }
+    >
+      <FilmsContent movie={movie} />
+    </Suspense>
   )
 }
